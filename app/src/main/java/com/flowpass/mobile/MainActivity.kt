@@ -240,7 +240,16 @@ class MainActivity : Activity() {
         setContentView(root)
     }
 
-    private fun isGoogleAccountsUrl(url: String?): Boolean = try {\n        val uri = Uri.parse(url ?: return false)\n        uri.scheme == "https" && uri.host == "accounts.google.com"\n    } catch (_: Exception) { false }\n\n    private fun attachEmailHelper() {
+    private fun isGoogleAccountsUrl(url: String?): Boolean {
+        return try {
+            val uri = Uri.parse(url ?: return false)
+            uri.scheme == "https" && uri.host == "accounts.google.com"
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun attachEmailHelper() {
         val script = """
             (function() {
               if (window.__flowPassEmailHelperAttached) return;
