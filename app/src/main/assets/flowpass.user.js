@@ -22,6 +22,7 @@
   if (typeof window !== 'undefined' && window.__flowLocalDiagnostic) return;
 
   const DIAGNOSTIC_ATTR = 'data-flow-local-diagnostic';
+  window.__flowPassEnabled = window.__flowPassEnabled !== false;
   const diagnostic = (typeof window !== 'undefined' && (window.__flowLocalDiagnostic = {
     state: 'armed',
     applied: 0,
@@ -162,7 +163,7 @@
     window.fetch = async function(input, init) {
       const rawUrl = input instanceof Request ? input.url : String(input);
 
-      if (!isBatchexecuteRequest(rawUrl)) {
+      if (!window.__flowPassEnabled || !isBatchexecuteRequest(rawUrl)) {
         return originalFetch.apply(this, arguments);
       }
 
@@ -218,7 +219,7 @@
         ...desc,
         get() {
           const raw = Reflect.apply(desc.get, this, []);
-          if (!targetXhrMap.get(this) || typeof raw !== 'string') return raw;
+          if (!window.__flowPassEnabled || !targetXhrMap.get(this) || typeof raw !== 'string') return raw;
           if (this.readyState !== 4) return raw;
 
           if (!appliedXhrMap.has(this)) {
@@ -252,5 +253,5 @@
     }
   });
 
-  setDiagnostic('armed');
+  setDiagnostic(window.__flowPassEnabled ? 'armed' : 'disabled');
 })();
