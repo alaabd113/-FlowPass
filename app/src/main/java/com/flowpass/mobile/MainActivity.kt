@@ -42,7 +42,6 @@ class MainActivity : Activity() {
    mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW
    userAgentString=DESKTOP_UA
   }
-  web.addJavascriptInterface(EmailBridge(),"FlowPassAccount")
   web.webViewClient=object:WebViewClient(){
    override fun onPageStarted(v:WebView?,u:String?,b:android.graphics.Bitmap?){
     injected=null;status.text="جارٍ فتح وضع الكمبيوتر…";info.text=u ?: ""
@@ -93,7 +92,7 @@ class MainActivity : Activity() {
    orientation=1;setBackgroundColor(Color.rgb(15,23,40));setPadding(dp(18),dp(28),dp(18),dp(18));elevation=dp(16).toFloat()
    addView(label("FLOWPASS",23f,gold,true));addView(label("لوحة التحكم",12f,muted,true))
    addView(label("المحرك",12f,muted,true).apply{setPadding(0,dp(20),0,dp(5))})
-   engine=Switch(this@MainActivity).apply{text="تفعيل FlowPass";setTextColor(Color.WHITE);isChecked=enabled;setOnCheckedChangeListener{_,v->enabled=v;prefs.edit().putBoolean("engine",v).apply();web.evaluateJavascript("window.__flowPassEnabled=$"+"v;",null);status.text=if(v)"المحرك مفعّل" else "المحرك متوقف"}}
+   engine=Switch(this@MainActivity).apply{text="تفعيل FlowPass";setTextColor(Color.WHITE);isChecked=enabled;setOnCheckedChangeListener{_,v->enabled=v;prefs.edit().putBoolean("engine",v).apply();web.evaluateJavascript("window.__flowPassEnabled=" + v.toString() + ";",null);status.text=if(v)"المحرك مفعّل" else "المحرك متوقف"}}
    addView(engine)
    addView(label("الحساب",12f,muted,true).apply{setPadding(0,dp(22),0,dp(5))})
    addView(label("يحفظ البريد الذي تدخله في صفحة Google ويحافظ على جلسة الدخول. لا يحفظ كلمة المرور.",11f,muted,false))
@@ -119,7 +118,7 @@ class MainActivity : Activity() {
   val u=web.url?:return
   if(!u.startsWith(FLOW)||injected==u)return
   injected=u
-  try{val js=assets.open("flowpass.user.js").bufferedReader().use{it.readText()};web.evaluateJavascript("(function(){window.__flowPassEnabled=true;$"+"js})();",null);status.text="تم تحميل محرك FlowPass"}
+  try{val js=assets.open("flowpass.user.js").bufferedReader().use{it.readText()};web.evaluateJavascript("(function(){window.__flowPassEnabled=true;" + js + "})();",null);status.text="تم تحميل محرك FlowPass"}
   catch(e:Exception){injected=null;status.text="تعذر تحميل المحرك";info.text=e.message?:"خطأ"}
  }
  private fun readDiagnostic(){web.evaluateJavascript("JSON.stringify(window.__flowLocalDiagnostic || {state:'waiting'})"){v->val s=v?.removeSurrounding("\"","\"")?.replace("\\\"","\"")?:"waiting";if(s.contains("applied"))status.text="تم تطبيق المحرك";info.text=s.take(180)}}
