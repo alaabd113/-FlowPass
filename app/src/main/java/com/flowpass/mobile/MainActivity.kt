@@ -2,6 +2,7 @@ package com.flowpass.mobile
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.graphics.Color
@@ -24,6 +25,7 @@ class MainActivity : Activity() {
     private var engineEnabled = true
     private var desktopMode = true
     private var injectedUrl: String? = null
+    private var filePathCallback: ValueCallback<Array<Uri>>? = null
 
     private val navy = Color.rgb(10, 16, 30)
     private val panel = Color.rgb(22, 32, 52)
@@ -46,7 +48,9 @@ class MainActivity : Activity() {
             databaseEnabled = true
             loadsImagesAutomatically = true
             javaScriptCanOpenWindowsAutomatically = true
-            setSupportMultipleWindows(false)
+            setSupportMultipleWindows(true)
+            mediaPlaybackRequiresUserGesture = false
+            textZoom = 100
             builtInZoomControls = true
             displayZoomControls = false
             allowFileAccess = false
@@ -88,6 +92,46 @@ class MainActivity : Activity() {
         }
 
         web.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(view: WebView?, callback: ValueCallback<Array<Uri>>?, params: FileChooserParams?): Boolean {
+                filePathCallback?.onReceiveValue(null)
+                filePathCallback = callback
+                return try {
+                    val picker = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                        type = "*/*"
+                        putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("image/*", "video/*"))
+                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                    }
+                    startActivityForResult(Intent.createChooser(picker, "اختيار صورة أو فيديو"), FILE_CHOOSER_REQUEST)
+                    true
+                } catch (error: Exception) {
+                    filePathCallback?.onReceiveValue(null)
+                    filePathCallback = null
+                    android.util.Log.e("FlowPass", "File picker unavailable", error)
+                    false
+                }
+            }
+
+            override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: android.os.Message?): Boolean {
+                val transport = resultMsg?.obj as? WebView.WebViewTransport ?: return false
+                val popup = WebView(this@MainActivity).apply {
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    webViewClient = object : WebViewClient() {
+                        override fun shouldOverrideUrlLoading(popupView: WebView?, request: WebResourceRequest?): Boolean {
+                            val target = request?.url?.toString() ?: return false
+                            if (target.startsWith("https://") || target.startsWith("http://")) web.loadUrl(target)
+                            popupView?.stopLoading()
+                            popupView?.destroy()
+                            return true
+                        }
+                    }
+                }
+                transport.webView = popup
+                resultMsg.sendToTarget()
+                return true
+            }
+
             override fun onConsoleMessage(message: ConsoleMessage): Boolean {
                 val text = message.message()
                 if (text.contains("[FlowPass]")) {
@@ -106,11 +150,23 @@ class MainActivity : Activity() {
     }
 
     private fun applyBrowserMode() {
+        val nativeUa = WebSettings.getDefaultUserAgent(this)
+        val chromeVersion = Regex("Chrome/([0-9]+)").find(nativeUa)?.groupValues?.get(1) ?: "120"
         web.settings.apply {
-            userAgentString = if (desktopMode) DESKTOP_UA else WebSettings.getDefaultUserAgent(this@MainActivity)
-            useWideViewPort = desktopMode
-            loadWithOverviewMode = desktopMode
+            if (desktopMode) {
+                userAgentString = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$chromeVersion.0.0.0 Safari/537.36"
+                useWideViewPort = true
+                loadWithOverviewMode = false
+                textZoom = 100
+            } else {
+                userAgentString = nativeUa
+                useWideViewPort = false
+                loadWithOverviewMode = false
+                textZoom = 100
+            }
         }
+        requestedOrientation = if (desktopMode) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        web.requestLayout()
     }
 
     private fun buildUi() {
@@ -184,7 +240,7 @@ class MainActivity : Activity() {
                 setPadding(0, dp(22), 0, dp(5))
             })
             desktopSwitch = Switch(this@MainActivity).apply {
-                text = "وضع الكمبيوتر"
+                text = "وضع الكمبيوتر (أفقي)"
                 setTextColor(Color.WHITE)
                 isChecked = desktopMode
                 setOnCheckedChangeListener { _, checked ->
@@ -348,6 +404,23 @@ class MainActivity : Activity() {
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 
+    @Deprecated("Deprecated in Android API")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == FILE_CHOOSER_REQUEST) {
+            val results = if (resultCode == RESULT_OK && data != null) {
+                val clip = data.clipData
+                when {
+                    clip != null -> Array(clip.itemCount) { index -> clip.getItemAt(index).uri }
+                    data.data != null -> arrayOf(data.data!!)
+                    else -> null
+                }
+            } else null
+            filePathCallback?.onReceiveValue(results)
+            filePathCallback = null
+        }
+    }
+
     override fun onPause() {
         if (::web.isInitialized) CookieManager.getInstance().flush()
         super.onPause()
@@ -373,7 +446,6 @@ class MainActivity : Activity() {
         private const val FLOW = "https://flow.google.com"
         private const val FLOW_URL = "https://flow.google.com/"
         private const val ACCOUNTS = "https://accounts.google.com"
-        private const val DESKTOP_UA =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        private const val FILE_CHOOSER_REQUEST = 4107
     }
 }
