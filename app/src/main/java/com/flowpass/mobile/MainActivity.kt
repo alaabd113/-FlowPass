@@ -209,60 +209,131 @@ class MainActivity : Activity() {
     }
 
     private fun buildUi() {
-        val root = FrameLayout(this)
+        // FLOWPASS Studio: a restrained editorial browser interface, not a generic neon dashboard.
+        val ink = Color.rgb(19, 24, 31)
+        val paper = Color.rgb(244, 243, 238)
+        val white = Color.rgb(255, 255, 255)
+        val line = Color.rgb(220, 220, 213)
+        val blue = Color.rgb(45, 91, 148)
+        val soft = Color.rgb(112, 119, 126)
+
+        val root = FrameLayout(this).apply { setBackgroundColor(paper) }
         val body = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(navy)
+            setBackgroundColor(paper)
         }
 
-        val top = LinearLayout(this).apply {
+        val masthead = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(12), dp(10), dp(12), dp(10))
+            setPadding(dp(20), dp(13), dp(18), dp(12))
+            setBackgroundColor(paper)
         }
-        top.addView(Button(this).apply {
+        val menu = TextView(this).apply {
             text = "☰"
-            textSize = 24f
-            setTextColor(gold)
-            background = round(panel)
-            contentDescription = "القائمة الجانبية"
+            textSize = 21f
+            gravity = Gravity.CENTER
+            setTextColor(ink)
+            background = editorialShape(white, line, 13)
+            contentDescription = "فتح لوحة التحكم"
             setOnClickListener { showDrawer() }
-        }, LinearLayout.LayoutParams(dp(48), dp(46)))
-
-        val brand = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), 0, 0, 0)
         }
-        brand.addView(label("FLOWPASS", 22f, gold, true))
-        brand.addView(label("PREMIUM DESKTOP BROWSER", 9f, Color.rgb(115, 190, 255), true))
-        top.addView(brand, LinearLayout.LayoutParams(0, -2, 1f))
-        top.background = premiumGradient(Color.rgb(13, 23, 43), Color.rgb(7, 12, 24))
-        top.elevation = dp(5).toFloat()
+        masthead.addView(menu, LinearLayout.LayoutParams(dp(44), dp(42)))
+        val identity = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(13), 0, 0, 0)
+        }
+        identity.addView(label("flowpass", 23f, ink, true).apply {
+            letterSpacing = -0.045f
+        })
+        identity.addView(label("BROWSER  /  STUDIO EDITION", 8f, soft, true).apply {
+            letterSpacing = 0.13f
+        })
+        masthead.addView(identity, LinearLayout.LayoutParams(0, -2, 1f))
+        masthead.addView(label("01", 10f, blue, true).apply {
+            gravity = Gravity.CENTER
+            background = editorialShape(Color.rgb(230, 236, 243), null, 9)
+            setPadding(dp(11), dp(7), dp(11), dp(7))
+        })
+        body.addView(masthead)
 
-        top.addView(Button(this).apply {
+        val addressRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(18), dp(3), dp(18), dp(13))
+            setBackgroundColor(paper)
+        }
+        val address = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = editorialShape(white, line, 15)
+            setPadding(dp(13), 0, dp(7), 0)
+        }
+        address.addView(label("↗", 16f, blue, true).apply {
+            gravity = Gravity.CENTER
+        }, LinearLayout.LayoutParams(dp(25), dp(46)))
+        val addressText = label("flow.google.com", 12f, ink, true).apply {
+            letterSpacing = 0.01f
+            setSingleLine(true)
+        }
+        address.addView(addressText, LinearLayout.LayoutParams(0, dp(46), 1f))
+        address.addView(TextView(this).apply {
             text = "↻"
-            textSize = 22f
-            setTextColor(gold)
-            background = round(panel)
-            contentDescription = "تحديث الصفحة"
+            textSize = 20f
+            gravity = Gravity.CENTER
+            setTextColor(ink)
             setOnClickListener { web.reload() }
-        }, LinearLayout.LayoutParams(dp(48), dp(46)))
-        body.addView(top)
+        }, LinearLayout.LayoutParams(dp(42), dp(42)))
+        addressRow.addView(address, LinearLayout.LayoutParams(-1, dp(48)))
+        body.addView(addressRow)
 
-        // The old browser-status card and visible URL have intentionally been removed.
+        val rule = View(this).apply { setBackgroundColor(line) }
+        body.addView(rule, LinearLayout.LayoutParams(-1, dp(1)))
+
         web = WebView(this)
         web.addJavascriptInterface(EmailBridge(), "FlowPassAccount")
         body.addView(web, LinearLayout.LayoutParams(-1, 0, 1f))
 
-        body.addView(LinearLayout(this).apply {
+        val footer = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setPadding(dp(8), dp(6), dp(8), dp(6))
-            setBackgroundColor(Color.rgb(7, 11, 21))
-            addView(label("FLOWPASS • DESKTOP MODE", 9f, muted, true))
-        })
+            setPadding(dp(10), dp(8), dp(10), dp(9))
+            setBackgroundColor(white)
+            elevation = dp(8).toFloat()
+        }
+        fun dockAction(symbol: String, caption: String, enabled: Boolean = true, action: () -> Unit): LinearLayout {
+            return LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                alpha = if (enabled) 1f else 0.35f
+                isClickable = enabled
+                isFocusable = enabled
+                setOnClickListener { if (enabled) action() }
+                addView(TextView(this@MainActivity).apply {
+                    text = symbol
+                    textSize = 20f
+                    gravity = Gravity.CENTER
+                    setTextColor(if (caption == "الرئيسية") blue else ink)
+                }, LinearLayout.LayoutParams(-1, dp(25)))
+                addView(TextView(this@MainActivity).apply {
+                    text = caption
+                    textSize = 9f
+                    gravity = Gravity.CENTER
+                    setTextColor(if (caption == "الرئيسية") blue else soft)
+                    typeface = Typeface.DEFAULT_BOLD
+                })
+            }
+        }
+        footer.addView(dockAction("⌂", "الرئيسية") { web.loadUrl(FLOW_URL) }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        footer.addView(dockAction("‹", "رجوع", actionBackAvailable()) { if (web.canGoBack()) web.goBack() }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        footer.addView(dockAction("›", "تقدم", false) { if (web.canGoForward()) web.goForward() }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        footer.addView(dockAction("•••", "الأدوات") { showDrawer() }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        body.addView(View(this).apply { setBackgroundColor(line) }, LinearLayout.LayoutParams(-1, dp(1)))
+        body.addView(footer)
 
         root.addView(body, FrameLayout.LayoutParams(-1, -1))
         shade = View(this).apply {
-            setBackgroundColor(0x99000000.toInt())
+            setBackgroundColor(0x770D121A)
             visibility = View.GONE
             setOnClickListener { hideDrawer() }
         }
@@ -270,31 +341,31 @@ class MainActivity : Activity() {
 
         drawer = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.rgb(15, 23, 40))
-            setPadding(dp(18), dp(28), dp(18), dp(18))
-            elevation = dp(16).toFloat()
+            setBackgroundColor(Color.rgb(249, 248, 244))
+            setPadding(dp(22), dp(30), dp(22), dp(18))
+            elevation = dp(20).toFloat()
 
-            addView(label("FLOWPASS", 25f, gold, true))
-            addView(label("PREMIUM DESKTOP EXPERIENCE", 9f, Color.rgb(115, 190, 255), true))
-            addView(label("لوحة التحكم", 12f, muted, true).apply {
-                setPadding(0, dp(4), 0, dp(10))
+            addView(label("CONTROL ROOM", 9f, blue, true).apply { letterSpacing = 0.16f })
+            addView(label("مساحة العمل", 26f, ink, true).apply {
+                setPadding(0, dp(6), 0, dp(3))
             })
-            addView(View(this@MainActivity).apply {
-                background = premiumGradient(gold, Color.rgb(75, 112, 170))
-            }, LinearLayout.LayoutParams(-1, dp(2)))
+            addView(label("إعدادات المتصفح وتجربة FlowPass", 11f, soft, false).apply {
+                setPadding(0, 0, 0, dp(18))
+            })
+            addView(View(this@MainActivity).apply { setBackgroundColor(line) },
+                LinearLayout.LayoutParams(-1, dp(1)))
 
-            addView(label("وضع العرض", 12f, muted, true).apply {
-                setPadding(0, dp(22), 0, dp(5))
+            addView(label("DISPLAY", 9f, blue, true).apply {
+                letterSpacing = 0.14f
+                setPadding(0, dp(22), 0, dp(7))
             })
             addView(label(
-                if (desktopMode) "وضع سطح المكتب مفعّل" else "وضع سطح المكتب متوقف",
-                13f, if (desktopMode) Color.rgb(91, 220, 155) else muted, true
-            ).apply {
-                setPadding(0, 0, 0, dp(5))
-            })
+                if (desktopMode) "سطح المكتب قيد التشغيل" else "عرض الهاتف قيد التشغيل",
+                15f, ink, true
+            ).apply { setPadding(0, 0, 0, dp(7)) })
             desktopSwitch = Switch(this@MainActivity).apply {
-                text = "عرض مواقع الكمبيوتر"
-                setTextColor(Color.WHITE)
+                text = "تصفح بنسخة الكمبيوتر"
+                setTextColor(ink)
                 isChecked = desktopMode
                 setOnCheckedChangeListener { _, checked ->
                     desktopMode = checked
@@ -305,19 +376,20 @@ class MainActivity : Activity() {
             }
             addView(desktopSwitch)
             addView(label(
-                "لتسجيل الدخول بالبريد: أوقف وضع سطح المكتب مؤقتاً من المفتاح أعلاه، أكمل تسجيل الدخول، ثم ارجع إلى هنا وفعّله مجدداً لتصفح المواقع بنسخة الكمبيوتر.",
-                11f, Color.rgb(226, 207, 157), false
+                "لتسجيل الدخول بالبريد، أوقف هذا الخيار مؤقتاً. بعد اكتمال الدخول، أعد تشغيله للعودة إلى عرض الكمبيوتر.",
+                11f, Color.rgb(83, 91, 101), false
             ).apply {
-                setPadding(dp(11), dp(10), dp(11), dp(10))
-                background = round(Color.rgb(31, 34, 42))
+                setPadding(dp(12), dp(11), dp(12), dp(11))
+                background = editorialShape(Color.rgb(237, 237, 230), null, 12)
             })
 
-            addView(label("محرك FlowPass", 12f, muted, true).apply {
-                setPadding(0, dp(22), 0, dp(5))
+            addView(label("ENGINE", 9f, blue, true).apply {
+                letterSpacing = 0.14f
+                setPadding(0, dp(23), 0, dp(7))
             })
             engineSwitch = Switch(this@MainActivity).apply {
-                text = "تفعيل المحرك"
-                setTextColor(Color.WHITE)
+                text = "محرك FlowPass"
+                setTextColor(ink)
                 isChecked = engineEnabled
                 setOnCheckedChangeListener { _, checked ->
                     engineEnabled = checked
@@ -328,41 +400,48 @@ class MainActivity : Activity() {
             }
             addView(engineSwitch)
 
-            addView(label("الحساب", 12f, muted, true).apply {
-                setPadding(0, dp(22), 0, dp(5))
+            addView(label("PRIVACY", 9f, blue, true).apply {
+                letterSpacing = 0.14f
+                setPadding(0, dp(23), 0, dp(7))
             })
             addView(label(
-                "يُحفظ البريد الذي تدخله على هذا الجهاز لتسهيل تعبئته لاحقاً. لا تُحفظ كلمة المرور ولا تتم قراءة رسائل Gmail.",
-                11f, muted, false
+                "يُحفظ البريد الذي تدخله على هذا الجهاز فقط لتسهيل تعبئته لاحقاً. لا تُحفظ كلمة المرور ولا تتم قراءة رسائل Gmail.",
+                11f, soft, false
             ))
 
-            addView(Button(this@MainActivity).apply {
-                text = "تحديث الصفحة"
-                setTextColor(Color.WHITE)
-                background = round(panel)
+            addView(TextView(this@MainActivity).apply {
+                text = "إعادة تحميل الصفحة     ↻"
+                textSize = 13f
+                gravity = Gravity.CENTER
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(white)
+                background = editorialShape(ink, null, 12)
                 setOnClickListener { hideDrawer(); web.reload() }
-            }, LinearLayout.LayoutParams(-1, dp(46)).apply { topMargin = dp(22) })
+            }, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(24) })
 
-            addView(Button(this@MainActivity).apply {
-                text = "إغلاق القائمة"
-                setTextColor(gold)
-                background = round(panel)
-                setOnClickListener { hideDrawer() }
-            }, LinearLayout.LayoutParams(-1, dp(46)).apply { topMargin = dp(8) })
-
-            addView(label("FLOWPASS", 11f, gold, true).apply {
+            addView(View(this@MainActivity).apply {
+                setBackgroundColor(line)
+            }, LinearLayout.LayoutParams(-1, dp(1)).apply { topMargin = dp(18) })
+            val signature = LinearLayout(this@MainActivity).apply {
+                orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
-                setPadding(0, dp(18), 0, dp(3))
-            })
-            addView(label("By Alaa Abdulaziz", 10f, muted, true).apply {
-                gravity = Gravity.CENTER
-                setPadding(0, 0, 0, dp(4))
-            })
+                addView(label("FLOWPASS  /  STUDIO", 9f, blue, true))
+                addView(label("Designed & developed by Alaa Abdulaziz", 9f, soft, false))
+            }
+            addView(signature, LinearLayout.LayoutParams(-1, 0, 1f))
         }
 
-        root.addView(drawer, FrameLayout.LayoutParams(dp(292), -1, Gravity.START))
+        root.addView(drawer, FrameLayout.LayoutParams(dp(316), -1, Gravity.START))
         drawer.visibility = View.GONE
         setContentView(root)
+    }
+
+    private fun actionBackAvailable(): Boolean = ::web.isInitialized && web.canGoBack()
+
+    private fun editorialShape(fill: Int, stroke: Int?, radius: Int) = GradientDrawable().apply {
+        setColor(fill)
+        cornerRadius = dp(radius).toFloat()
+        if (stroke != null) setStroke(dp(1), stroke)
     }
 
     private fun showWelcomeDialog() {
