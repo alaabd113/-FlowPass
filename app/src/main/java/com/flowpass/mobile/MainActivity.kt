@@ -232,9 +232,11 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12), 0, 0, 0)
         }
-        brand.addView(label("FLOWPASS", 21f, gold, true))
-        brand.addView(label("DESKTOP FLOW • MOBILE APP", 9f, muted, true))
+        brand.addView(label("FLOWPASS", 22f, gold, true))
+        brand.addView(label("PREMIUM DESKTOP BROWSER", 9f, Color.rgb(115, 190, 255), true))
         top.addView(brand, LinearLayout.LayoutParams(0, -2, 1f))
+        top.background = premiumGradient(Color.rgb(13, 23, 43), Color.rgb(7, 12, 24))
+        top.elevation = dp(5).toFloat()
 
         top.addView(Button(this).apply {
             text = "↻"
@@ -272,11 +274,23 @@ class MainActivity : Activity() {
             setPadding(dp(18), dp(28), dp(18), dp(18))
             elevation = dp(16).toFloat()
 
-            addView(label("FLOWPASS", 23f, gold, true))
-            addView(label("لوحة التحكم", 12f, muted, true))
+            addView(label("FLOWPASS", 25f, gold, true))
+            addView(label("PREMIUM DESKTOP EXPERIENCE", 9f, Color.rgb(115, 190, 255), true))
+            addView(label("لوحة التحكم", 12f, muted, true).apply {
+                setPadding(0, dp(4), 0, dp(10))
+            })
+            addView(View(this@MainActivity).apply {
+                background = premiumGradient(gold, Color.rgb(75, 112, 170))
+            }, LinearLayout.LayoutParams(-1, dp(2)))
 
             addView(label("وضع العرض", 12f, muted, true).apply {
                 setPadding(0, dp(22), 0, dp(5))
+            })
+            addView(label(
+                if (desktopMode) "وضع سطح المكتب مفعّل" else "وضع سطح المكتب متوقف",
+                13f, if (desktopMode) Color.rgb(91, 220, 155) else muted, true
+            ).apply {
+                setPadding(0, 0, 0, dp(5))
             })
             desktopSwitch = Switch(this@MainActivity).apply {
                 text = "عرض مواقع الكمبيوتر"
@@ -290,6 +304,13 @@ class MainActivity : Activity() {
                 }
             }
             addView(desktopSwitch)
+            addView(label(
+                "لتسجيل الدخول بالبريد: أوقف وضع سطح المكتب مؤقتاً من المفتاح أعلاه، أكمل تسجيل الدخول، ثم ارجع إلى هنا وفعّله مجدداً لتصفح المواقع بنسخة الكمبيوتر.",
+                11f, Color.rgb(226, 207, 157), false
+            ).apply {
+                setPadding(dp(11), dp(10), dp(11), dp(10))
+                background = round(Color.rgb(31, 34, 42))
+            })
 
             addView(label("محرك FlowPass", 12f, muted, true).apply {
                 setPadding(0, dp(22), 0, dp(5))
@@ -371,7 +392,19 @@ class MainActivity : Activity() {
             13f, muted, false
         ).apply {
             gravity = Gravity.CENTER
-            setPadding(0, dp(4), 0, dp(18))
+            setPadding(0, dp(4), 0, dp(12))
+        })
+        content.addView(label("ملاحظة تسجيل الدخول المهمة", 13f, gold, true).apply {
+            gravity = Gravity.CENTER
+            setPadding(0, dp(5), 0, dp(5))
+        })
+        content.addView(label(
+            "وضع سطح المكتب مفعّل تلقائياً. عند تسجيل الدخول بالبريد الإلكتروني، أوقفه مؤقتاً من القائمة الجانبية، وبعد اكتمال تسجيل الدخول ارجع وفعّله من جديد.",
+            12f, Color.rgb(226, 207, 157), false
+        ).apply {
+            gravity = Gravity.CENTER
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+            background = round(Color.rgb(31, 34, 42))
         })
         content.addView(Button(this).apply {
             text = "اشترك بقناة تيليجرام"
@@ -506,7 +539,14 @@ class MainActivity : Activity() {
 
     private fun round(color: Int) = GradientDrawable().apply {
         setColor(color)
-        cornerRadius = dp(12).toFloat()
+        cornerRadius = dp(14).toFloat()
+        setStroke(dp(1), Color.argb(70, 222, 187, 96))
+    }
+
+    private fun premiumGradient(start: Int, end: Int) = GradientDrawable(
+        GradientDrawable.Orientation.TL_BR, intArrayOf(start, end)
+    ).apply {
+        cornerRadius = dp(16).toFloat()
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
