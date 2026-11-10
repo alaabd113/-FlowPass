@@ -325,8 +325,8 @@ class MainActivity : Activity() {
             }
         }
         footer.addView(dockAction("⌂", "الرئيسية") { web.loadUrl(FLOW_URL) }, LinearLayout.LayoutParams(0, dp(48), 1f))
-        footer.addView(dockAction("‹", "رجوع", actionBackAvailable()) { if (web.canGoBack()) web.goBack() }, LinearLayout.LayoutParams(0, dp(48), 1f))
-        footer.addView(dockAction("›", "تقدم", false) { if (web.canGoForward()) web.goForward() }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        footer.addView(dockAction("‹", "رجوع", true) { if (web.canGoBack()) web.goBack() }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        footer.addView(dockAction("›", "تقدم", true) { if (web.canGoForward()) web.goForward() }, LinearLayout.LayoutParams(0, dp(48), 1f))
         footer.addView(dockAction("•••", "الأدوات") { showDrawer() }, LinearLayout.LayoutParams(0, dp(48), 1f))
         body.addView(View(this).apply { setBackgroundColor(line) }, LinearLayout.LayoutParams(-1, dp(1)))
         body.addView(footer)
