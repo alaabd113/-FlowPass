@@ -84,7 +84,7 @@ class MainActivity : Activity() {
   info=label("سيتم فتح Google Flow بواجهة سطح مكتب.",10f,muted,false).apply{setPadding(0,dp(5),0,0)}
   card.addView(info)
   body.addView(LinearLayout(this).apply{setPadding(dp(12),0,dp(12),dp(8));addView(card)})
-  web=WebView(this);body.addView(web,LinearLayout.LayoutParams(-1,0,1f))
+  web=WebView(this);web.addJavascriptInterface(EmailBridge(),"FlowPassAccount");body.addView(web,LinearLayout.LayoutParams(-1,0,1f))
   body.addView(LinearLayout(this).apply{gravity=Gravity.CENTER;setPadding(dp(8),dp(6),dp(8),dp(6));setBackgroundColor(Color.rgb(7,11,21));addView(label("FLOWPASS • DESKTOP MODE",9f,muted,true))})
   root.addView(body,FrameLayout.LayoutParams(-1,-1))
   shade=View(this).apply{setBackgroundColor(0x99000000.toInt());visibility=View.GONE;setOnClickListener{hideDrawer()}}
@@ -104,7 +104,7 @@ class MainActivity : Activity() {
   setContentView(root)
  }
  private fun rememberEmail(){
-  val js="""(function(){const a=()=>{const f=document.querySelector('input[type=email],input[autocomplete=username]');if(!f)return;const s=()=>{if(f.value&&f.value.includes('@'))FlowPassAccount.saveEmail(f.value)};f.addEventListener('change',s);f.addEventListener('blur',s)};a();new MutationObserver(a).observe(document.documentElement,{childList:true,subtree:true})})();"""
+  val js="""(function(){const a=()=>{const f=document.querySelector('input[type=email],input[autocomplete=username]');if(!f)return;const old=FlowPassAccount.getEmail();if(!f.value&&old){f.value=old;f.dispatchEvent(new Event('input',{bubbles:true}));}const s=()=>{if(f.value&&f.value.includes('@'))FlowPassAccount.saveEmail(f.value)};f.addEventListener('change',s);f.addEventListener('blur',s)};a();new MutationObserver(a).observe(document.documentElement,{childList:true,subtree:true})})();"""
   web.evaluateJavascript(js,null)
  }
  inner class EmailBridge{
