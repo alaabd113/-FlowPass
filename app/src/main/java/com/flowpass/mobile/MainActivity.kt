@@ -158,7 +158,7 @@ class MainActivity : Activity() {
                 // Desktop UA alone is not enough: force a desktop layout viewport.
                 useWideViewPort = true
                 loadWithOverviewMode = true
-                supportZoom = true
+                setSupportZoom(true)
                 textZoom = 100
             } else {
                 userAgentString = nativeUa
