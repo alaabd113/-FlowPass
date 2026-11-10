@@ -2,6 +2,7 @@ package com.flowpass.mobile
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.Dialog
 import android.content.Intent
 import android.net.Uri
 import android.graphics.Color
@@ -25,6 +26,7 @@ class MainActivity : Activity() {
     private var desktopMode = true
     private var injectedUrl: String? = null
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
+    private var welcomeDialog: Dialog? = null
 
     private val navy = Color.rgb(10, 16, 30)
     private val panel = Color.rgb(22, 32, 52)
@@ -142,6 +144,7 @@ class MainActivity : Activity() {
         }
 
         if (savedInstanceState == null) {
+            if (!prefs.getBoolean("welcome_seen", false)) showWelcomeDialog()
             web.loadUrl(FLOW_URL)
         } else {
             val restored = web.restoreState(savedInstanceState)
@@ -325,11 +328,79 @@ class MainActivity : Activity() {
                 background = round(panel)
                 setOnClickListener { hideDrawer() }
             }, LinearLayout.LayoutParams(-1, dp(46)).apply { topMargin = dp(8) })
+
+            addView(label("FLOWPASS", 11f, gold, true).apply {
+                gravity = Gravity.CENTER
+                setPadding(0, dp(18), 0, dp(3))
+            })
+            addView(label("By Alaa Abdulaziz", 10f, muted, true).apply {
+                gravity = Gravity.CENTER
+                setPadding(0, 0, 0, dp(4))
+            })
         }
 
         root.addView(drawer, FrameLayout.LayoutParams(dp(292), -1, Gravity.START))
         drawer.visibility = View.GONE
         setContentView(root)
+    }
+
+    private fun showWelcomeDialog() {
+        if (isFinishing || welcomeDialog?.isShowing == true) return
+
+        val dialog = Dialog(this)
+        welcomeDialog = dialog
+
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(24), dp(28), dp(24), dp(24))
+            background = round(Color.rgb(15, 23, 40))
+        }
+        content.addView(label("FLOWPASS", 25f, gold, true).apply {
+            gravity = Gravity.CENTER
+        })
+        content.addView(label(
+            "تم تطوير التطبيق بواسطة علاء عبد العزيز",
+            15f, Color.WHITE, true
+        ).apply {
+            gravity = Gravity.CENTER
+            setPadding(0, dp(14), 0, dp(8))
+        })
+        content.addView(label(
+            "يسعدنا انضمامك إلى قناتنا على تيليجرام. اضغط للاشتراك ثم ارجع للتطبيق، وسيكمل العمل تلقائياً.",
+            13f, muted, false
+        ).apply {
+            gravity = Gravity.CENTER
+            setPadding(0, dp(4), 0, dp(18))
+        })
+        content.addView(Button(this).apply {
+            text = "اشترك بقناة تيليجرام"
+            textSize = 14f
+            setTextColor(Color.rgb(10, 16, 30))
+            background = round(gold)
+            setOnClickListener {
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TELEGRAM_URL)))
+                } catch (error: Exception) {
+                    android.util.Log.w("FlowPass", "Could not open Telegram channel", error)
+                } finally {
+                    dialog.dismiss()
+                }
+            }
+        }, LinearLayout.LayoutParams(-1, dp(50)))
+
+        dialog.setContentView(content)
+        dialog.setCancelable(true)
+        dialog.setOnDismissListener {
+            prefs.edit().putBoolean("welcome_seen", true).apply()
+            welcomeDialog = null
+        }
+        dialog.show()
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.90f).toInt(),
+            -2
+        )
     }
 
     private fun isGoogleAccountsUrl(url: String?): Boolean {
@@ -481,6 +552,7 @@ class MainActivity : Activity() {
     companion object {
         private const val FLOW = "https://flow.google.com"
         private const val FLOW_URL = "https://flow.google.com/"
+        private const val TELEGRAM_URL = "https://t.me/EngAlaaAIStudio"
         private const val ACCOUNTS = "https://accounts.google.com"
         private const val FILE_CHOOSER_REQUEST = 4107
     }
