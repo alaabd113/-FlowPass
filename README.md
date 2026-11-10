@@ -1,17 +1,23 @@
-# FlowPass Mobile 1.1.0
+# FlowPass Mobile 1.2.0
 
 Android WebView companion for Google Flow.
 
-## 1.1.0 updates
-- Three-line menu opens a side drawer.
-- FlowPass engine switch is inside the drawer and its state persists.
-- Desktop Chrome user-agent and wide viewport request the desktop Flow experience.
-- Google sign-in email is remembered locally and can be filled again on the Google sign-in page.
-- WebView cookies are retained and flushed so a valid Google sign-in session can survive app restarts.
-- Passwords are not stored by FlowPass.
+## 1.2.0 updates
+- Removed the browser-status card and the visible page URL from the main screen.
+- Kept navigation, refresh, and all controls inside the side drawer.
+- Added an independent, persistent Desktop mode switch.
+- Added an independent, persistent FlowPass engine switch.
+- Removed the redundant "Open Flow in desktop mode" action.
+- Retained local email autofill support on Google's account sign-in page.
+- Tightened the native email-saving bridge so it accepts values only on the exact HTTPS `accounts.google.com` origin.
+- Kept WebView cookies enabled and flushed them when the app pauses or Flow loads.
+- No password storage and no automatic access to Gmail inboxes.
+
+## Google sign-in note
+Google may reject sign-in attempts made inside embedded WebViews with an "This browser or app may not be secure" message. This is a Google sign-in restriction, not a visual app error. FlowPass does not bypass that restriction. The app can remember an email entered on the supported sign-in page, but it cannot import Google passwords, silently use device accounts, or read Gmail messages without a separate official authorization flow.
 
 ## Build
 Use JDK 17 and Android Gradle Plugin 8.7.3. Run `gradle assembleDebug` or open the project in Android Studio.
 
-## Limitations
-The desktop user-agent requests the desktop website but cannot guarantee every Flow feature works on a phone-sized display. Google may require a fresh sign-in, CAPTCHA, subscription, or supported-region check. The bundled userscript depends on Google's current response format and may need maintenance if Flow changes it. Test on a physical Android device before relying on it.
+## Compatibility
+Desktop mode changes the browser user-agent and viewport request. Google Flow's desktop layout and features may still vary by device, account, region, and Google's current service behavior. The bundled FlowPass userscript depends on Google's response format and may require updates if that format changes. Verify behavior on a physical Android device.
