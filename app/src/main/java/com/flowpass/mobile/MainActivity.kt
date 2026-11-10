@@ -3,7 +3,6 @@ package com.flowpass.mobile
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.graphics.Color
 import android.graphics.Typeface
@@ -156,7 +155,7 @@ class MainActivity : Activity() {
             if (desktopMode) {
                 userAgentString = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$chromeVersion.0.0.0 Safari/537.36"
                 useWideViewPort = true
-                loadWithOverviewMode = false
+                loadWithOverviewMode = true
                 textZoom = 100
             } else {
                 userAgentString = nativeUa
@@ -165,7 +164,7 @@ class MainActivity : Activity() {
                 textZoom = 100
             }
         }
-        requestedOrientation = if (desktopMode) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE else ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         web.requestLayout()
     }
 
@@ -240,7 +239,7 @@ class MainActivity : Activity() {
                 setPadding(0, dp(22), 0, dp(5))
             })
             desktopSwitch = Switch(this@MainActivity).apply {
-                text = "وضع الكمبيوتر (أفقي)"
+                text = "عرض مواقع الكمبيوتر"
                 setTextColor(Color.WHITE)
                 isChecked = desktopMode
                 setOnCheckedChangeListener { _, checked ->
