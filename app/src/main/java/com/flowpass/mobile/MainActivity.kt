@@ -209,13 +209,13 @@ class MainActivity : Activity() {
     }
 
     private fun buildUi() {
-        // FLOWPASS Studio: a restrained editorial browser interface, not a generic neon dashboard.
-        val ink = Color.rgb(19, 24, 31)
-        val paper = Color.rgb(244, 243, 238)
-        val white = Color.rgb(255, 255, 255)
-        val line = Color.rgb(220, 220, 213)
-        val blue = Color.rgb(45, 91, 148)
-        val soft = Color.rgb(112, 119, 126)
+        // FLOWPASS Premium: deep navy surfaces, metallic gold accents and electric-blue details.
+        val ink = Color.rgb(244, 240, 229)
+        val paper = Color.rgb(10, 16, 30)
+        val white = Color.rgb(22, 32, 52)
+        val line = Color.rgb(55, 68, 91)
+        val blue = Color.rgb(74, 180, 255)
+        val soft = Color.rgb(166, 180, 203)
 
         val root = FrameLayout(this).apply { setBackgroundColor(paper) }
         val body = LinearLayout(this).apply {
@@ -234,7 +234,7 @@ class MainActivity : Activity() {
             textSize = 21f
             gravity = Gravity.CENTER
             setTextColor(ink)
-            background = editorialShape(white, line, 13)
+            background = editorialShape(panel, gold, 13)
             contentDescription = "فتح لوحة التحكم"
             setOnClickListener { showDrawer() }
         }
@@ -243,16 +243,16 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(13), 0, 0, 0)
         }
-        identity.addView(label("flowpass", 23f, ink, true).apply {
+        identity.addView(label("flowpass", 23f, gold, true).apply {
             letterSpacing = -0.045f
         })
         identity.addView(label("BROWSER  /  STUDIO EDITION", 8f, soft, true).apply {
             letterSpacing = 0.13f
         })
         masthead.addView(identity, LinearLayout.LayoutParams(0, -2, 1f))
-        masthead.addView(label("01", 10f, blue, true).apply {
+        masthead.addView(label("01", 10f, gold, true).apply {
             gravity = Gravity.CENTER
-            background = editorialShape(Color.rgb(230, 236, 243), null, 9)
+            background = editorialShape(Color.rgb(39, 43, 54), null, 9)
             setPadding(dp(11), dp(7), dp(11), dp(7))
         })
         body.addView(masthead)
@@ -266,7 +266,7 @@ class MainActivity : Activity() {
         val address = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            background = editorialShape(white, line, 15)
+            background = editorialShape(white, gold, 15)
             setPadding(dp(13), 0, dp(7), 0)
         }
         address.addView(label("↗", 16f, blue, true).apply {
@@ -313,13 +313,13 @@ class MainActivity : Activity() {
                     text = symbol
                     textSize = 20f
                     gravity = Gravity.CENTER
-                    setTextColor(if (caption == "الرئيسية") blue else ink)
+                    setTextColor(if (caption == "الرئيسية") gold else ink)
                 }, LinearLayout.LayoutParams(-1, dp(25)))
                 addView(TextView(this@MainActivity).apply {
                     text = caption
                     textSize = 9f
                     gravity = Gravity.CENTER
-                    setTextColor(if (caption == "الرئيسية") blue else soft)
+                    setTextColor(if (caption == "الرئيسية") gold else soft)
                     typeface = Typeface.DEFAULT_BOLD
                 })
             }
@@ -341,7 +341,7 @@ class MainActivity : Activity() {
 
         drawer = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.rgb(249, 248, 244))
+            setBackgroundColor(Color.rgb(14, 22, 38))
             setPadding(dp(22), dp(30), dp(22), dp(18))
             elevation = dp(20).toFloat()
 
@@ -377,10 +377,10 @@ class MainActivity : Activity() {
             addView(desktopSwitch)
             addView(label(
                 "لتسجيل الدخول بالبريد، أوقف هذا الخيار مؤقتاً. بعد اكتمال الدخول، أعد تشغيله للعودة إلى عرض الكمبيوتر.",
-                11f, Color.rgb(83, 91, 101), false
+                11f, Color.rgb(166, 180, 203), false
             ).apply {
                 setPadding(dp(12), dp(11), dp(12), dp(11))
-                background = editorialShape(Color.rgb(237, 237, 230), null, 12)
+                background = editorialShape(Color.rgb(31, 43, 63), null, 12)
             })
 
             addView(label("ENGINE", 9f, blue, true).apply {
@@ -414,8 +414,8 @@ class MainActivity : Activity() {
                 textSize = 13f
                 gravity = Gravity.CENTER
                 typeface = Typeface.DEFAULT_BOLD
-                setTextColor(white)
-                background = editorialShape(ink, null, 12)
+                setTextColor(Color.rgb(10, 16, 30))
+                background = editorialShape(gold, null, 12)
                 setOnClickListener { hideDrawer(); web.reload() }
             }, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(24) })
 
