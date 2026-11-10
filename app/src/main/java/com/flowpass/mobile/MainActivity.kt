@@ -66,6 +66,7 @@ class MainActivity : Activity() {
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
+                if (desktopMode) enforceDesktopViewport()
                 if (isGoogleAccountsUrl(url)) attachEmailHelper()
                 if (url?.startsWith(FLOW) == true) {
                     CookieManager.getInstance().flush()
@@ -154,8 +155,10 @@ class MainActivity : Activity() {
         web.settings.apply {
             if (desktopMode) {
                 userAgentString = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/$chromeVersion.0.0.0 Safari/537.36"
+                // Desktop UA alone is not enough: force a desktop layout viewport.
                 useWideViewPort = true
                 loadWithOverviewMode = true
+                supportZoom = true
                 textZoom = 100
             } else {
                 userAgentString = nativeUa
@@ -165,7 +168,41 @@ class MainActivity : Activity() {
             }
         }
         requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        web.setInitialScale(0)
         web.requestLayout()
+    }
+
+    /**
+     * Keep the device portrait while presenting a 980 CSS-pixel desktop viewport.
+     * WebView wide-viewport settings alone do not override width=device-width.
+     */
+    private fun enforceDesktopViewport() {
+        if (!desktopMode || !::web.isInitialized) return
+        val script = """
+            (function() {
+              if (window.__flowPassDesktopViewportInstalled) return;
+              window.__flowPassDesktopViewportInstalled = true;
+              const desktopViewport = 'width=980, initial-scale=1.0, minimum-scale=0.25, maximum-scale=5.0, user-scalable=yes';
+              const apply = () => {
+                let meta = document.querySelector('meta[name="viewport"]');
+                if (!meta) {
+                  meta = document.createElement('meta');
+                  meta.name = 'viewport';
+                  (document.head || document.documentElement).appendChild(meta);
+                }
+                if (meta.content !== desktopViewport) meta.setAttribute('content', desktopViewport);
+              };
+              apply();
+              const observer = new MutationObserver(apply);
+              observer.observe(document.documentElement, {
+                subtree: true, childList: true, attributes: true,
+                attributeFilter: ['content', 'name']
+              });
+              window.addEventListener('pageshow', apply);
+              window.addEventListener('orientationchange', apply);
+            })();
+        """.trimIndent()
+        web.evaluateJavascript(script, null)
     }
 
     private fun buildUi() {
