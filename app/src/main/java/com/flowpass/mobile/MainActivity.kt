@@ -3,6 +3,7 @@ package com.flowpass.mobile
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.pm.ActivityInfo
+import android.net.Uri
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -58,11 +59,11 @@ class MainActivity : Activity() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                 injectedUrl = null
                 if (url?.startsWith(FLOW) == true) injectEngine()
-                if (url?.startsWith(ACCOUNTS) == true) attachEmailHelper()
+                if (isGoogleAccountsUrl(url)) attachEmailHelper()
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
-                if (url?.startsWith(ACCOUNTS) == true) attachEmailHelper()
+                if (isGoogleAccountsUrl(url)) attachEmailHelper()
                 if (url?.startsWith(FLOW) == true) {
                     CookieManager.getInstance().flush()
                     readDiagnostic()
@@ -206,6 +207,7 @@ class MainActivity : Activity() {
                     engineEnabled = checked
                     prefs.edit().putBoolean("engine", checked).apply()
                     web.evaluateJavascript("window.__flowPassEnabled = $checked;", null)
+                    if (checked) injectEngine()
                 }
             }
             addView(engineSwitch)
@@ -238,7 +240,7 @@ class MainActivity : Activity() {
         setContentView(root)
     }
 
-    private fun attachEmailHelper() {
+    private fun isGoogleAccountsUrl(url: String?): Boolean = try {\n        val uri = Uri.parse(url ?: return false)\n        uri.scheme == "https" && uri.host == "accounts.google.com"\n    } catch (_: Exception) { false }\n\n    private fun attachEmailHelper() {
         val script = """
             (function() {
               if (window.__flowPassEmailHelperAttached) return;
@@ -277,7 +279,7 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun saveEmail(value: String?) {
-            if (web.url?.startsWith(ACCOUNTS) != true) return
+            if (!isGoogleAccountsUrl(web.url)) return
             val email = value?.trim()?.take(254) ?: return
             if (email.matches(Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"))) {
                 prefs.edit().putString("google_email", email).apply()
