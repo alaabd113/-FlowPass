@@ -107,6 +107,7 @@ class MainActivity : Activity() {
   web.evaluateJavascript(js,null)
  }
  inner class EmailBridge{
+  @JavascriptInterface fun getEmail():String=prefs.getString("google_email","")?:""
   @JavascriptInterface fun saveEmail(value:String?){
    if(web.url?.startsWith("https://accounts.google.com")!=true)return
    val e=value?.trim()?.take(254)?:return
