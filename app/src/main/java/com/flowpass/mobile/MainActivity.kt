@@ -241,9 +241,14 @@ class MainActivity : Activity() {
             setOnClickListener { showDrawer() }
         }
         masthead.addView(menu, LinearLayout.LayoutParams(dp(44), dp(42)))
+        masthead.addView(ImageView(this).apply {
+            setImageResource(R.drawable.ic_flowpass_foreground)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            contentDescription = "FLOWPASS premium logo"
+        }, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginStart = dp(9) })
         val identity = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(13), 0, 0, 0)
+            setPadding(dp(9), 0, 0, 0)
         }
         identity.addView(label("flowpass", 23f, gold, true).apply {
             letterSpacing = -0.045f
@@ -488,6 +493,11 @@ class MainActivity : Activity() {
             setPadding(dp(22), dp(30), dp(22), dp(18))
             elevation = dp(20).toFloat()
 
+            addView(ImageView(this@MainActivity).apply {
+                setImageResource(R.drawable.ic_flowpass_foreground)
+                scaleType = ImageView.ScaleType.FIT_CENTER
+                contentDescription = "FLOWPASS premium logo"
+            }, LinearLayout.LayoutParams(dp(64), dp(64)).apply { gravity = Gravity.CENTER_HORIZONTAL })
             addView(label("CONTROL ROOM", 9f, blue, true).apply { letterSpacing = 0.16f })
             addView(label("مساحة العمل", 26f, ink, true).apply {
                 setPadding(0, dp(6), 0, dp(3))
@@ -626,6 +636,11 @@ class MainActivity : Activity() {
             setPadding(dp(24), dp(28), dp(24), dp(24))
             background = round(Color.rgb(15, 23, 40))
         }
+        content.addView(ImageView(this).apply {
+            setImageResource(R.drawable.ic_flowpass_foreground)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            contentDescription = "FLOWPASS premium logo"
+        }, LinearLayout.LayoutParams(dp(82), dp(82)).apply { gravity = Gravity.CENTER })
         content.addView(label("FLOWPASS", 25f, gold, true).apply {
             gravity = Gravity.CENTER
         })
