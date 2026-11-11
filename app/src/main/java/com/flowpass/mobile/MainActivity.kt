@@ -379,8 +379,8 @@ class MainActivity : Activity() {
             try {
                 val safeId = id.filter { it.isLetterOrDigit() || it == '-' || it == '_' }.take(100)
                 if (safeId.isBlank()) return
-                val safeName = filename.substringAfterLast('/').substringAfterLast('\\\\')
-                    .replace(Regex("[/:*?\\"<>|]"), "_").take(180)
+                val safeName = filename.substringAfterLast('/')
+                    .filterNot { it.code in intArrayOf(47, 58, 42, 63, 34, 60, 62, 124, 92) }.take(180)
                     .ifBlank { "flowpass_download" }
                 val temp = File(cacheDir, "blob-$safeId.tmp")
                 blobFiles[safeId] = temp
