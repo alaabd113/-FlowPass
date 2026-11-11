@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -14,10 +14,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Inspect FlowPass 1.5 source archive
+        with:
+          fetch-depth: 0
+      - name: Integrate FlowPass 1.5 source
         run: |
-          test -f FlowPass-1.5.0-Royal-Studio-Source.zip
-          unzip -l FlowPass-1.5.0-Royal-Studio-Source.zip
+          set -euo pipefail
+          unzip -q FlowPass-1.5.0-Royal-Studio-Source.zip -d "$RUNNER_TEMP/flowpass15"
+          SOURCE_DIR="$RUNNER_TEMP/flowpass15/-FlowPass-main"
+          test -f "$SOURCE_DIR/app/src/main/java/com/flowpass/mobile/MainActivity.kt"
+          test -f "$SOURCE_DIR/app/src/main/assets/flowpass.user.js"
+          rsync -a --exclude='.github/' "$SOURCE_DIR/" ./
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md build.gradle.kts gradle.properties settings.gradle.kts app/
+          if ! git diff --cached --quiet; then
+            git commit -m "Integrate FlowPass 1.5 Royal Studio source"
+            git push origin HEAD:main
+          fi
+      - name: Verify app version
+        run: |
+          grep -n 'versionName = "1.5.0"' app/build.gradle.kts
+          grep -n 'versionCode' app/build.gradle.kts
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -27,11 +44,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
-      - name: Upload APK
+      - name: Build FlowPass 1.5 debug APK
+        run: gradle --no-daemon clean assembleDebug
+      - name: Upload FlowPass 1.5 APK
         uses: actions/upload-artifact@v4
         with:
-          name: FlowPass-Mobile-debug-apk
+          name: FlowPass-Mobile-1.5.0-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
