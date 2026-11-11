@@ -281,7 +281,7 @@ class MainActivity : Activity() {
                 web.url?.let { request.addRequestHeader("Referer", it) }
 
                 val fileName = URLUtil.guessFileName(downloadUrl, contentDisposition, mimeType)
-                    .replace(Regex("[\\\\/:*?\\"<>|]"), "_")
+                    .replace(Regex("[/:*?\"<>|]"), "_").replace(92.toChar(), '_')
                     .ifBlank { "flowpass_download" }
 
                 request.setTitle(fileName)
