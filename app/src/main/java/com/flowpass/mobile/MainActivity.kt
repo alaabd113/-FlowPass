@@ -16,6 +16,8 @@ import android.widget.*
 
 class MainActivity : Activity() {
     private lateinit var web: WebView
+    private lateinit var homePanel: ScrollView
+    private lateinit var addressInput: EditText
     private lateinit var drawer: LinearLayout
     private lateinit var shade: View
     private lateinit var engineSwitch: Switch
@@ -272,17 +274,27 @@ class MainActivity : Activity() {
         address.addView(label("↗", 16f, blue, true).apply {
             gravity = Gravity.CENTER
         }, LinearLayout.LayoutParams(dp(25), dp(46)))
-        val addressText = label("flow.google.com", 12f, ink, true).apply {
-            letterSpacing = 0.01f
-            setSingleLine(true)
-        }
-        address.addView(addressText, LinearLayout.LayoutParams(0, dp(46), 1f))
-        address.addView(TextView(this).apply {
-            text = "↻"
-            textSize = 20f
-            gravity = Gravity.CENTER
+        addressInput = EditText(this).apply {
+            hint = "ابحث أو أدخل عنوان الموقع"
+            setHintTextColor(soft)
             setTextColor(ink)
-            setOnClickListener { web.reload() }
+            textSize = 13f
+            singleLine = true
+            imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_GO
+            setPadding(0, 0, 0, 0)
+            background = null
+            setOnEditorActionListener { _, _, _ ->
+                navigateFromAddress()
+                true
+            }
+        }
+        address.addView(addressInput, LinearLayout.LayoutParams(0, dp(46), 1f))
+        address.addView(TextView(this).apply {
+            text = "➜"
+            textSize = 19f
+            gravity = Gravity.CENTER
+            setTextColor(gold)
+            setOnClickListener { navigateFromAddress() }
         }, LinearLayout.LayoutParams(dp(42), dp(42)))
         addressRow.addView(address, LinearLayout.LayoutParams(-1, dp(48)))
         body.addView(addressRow)
@@ -290,7 +302,138 @@ class MainActivity : Activity() {
         val rule = View(this).apply { setBackgroundColor(line) }
         body.addView(rule, LinearLayout.LayoutParams(-1, dp(1)))
 
+        // Premium home screen: native Android components, not a static mockup.
+        homePanel = ScrollView(this).apply {
+            isFillViewport = true
+            setBackgroundColor(paper)
+            overScrollMode = View.OVER_SCROLL_NEVER
+        }
+        val homeContent = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(18), dp(20), dp(18), dp(24))
+            setBackgroundColor(paper)
+        }
+        homeContent.addView(label("BROWSE  •  EXPLORE  •  MORE", 9f, blue, true).apply {
+            letterSpacing = 0.18f
+        })
+        homeContent.addView(label("تصفّح بطريقتك", 27f, ink, true).apply {
+            setPadding(0, dp(5), 0, dp(2))
+        })
+        homeContent.addView(label("مساحتك الخاصة للوصول السريع إلى الويب", 12f, soft, false).apply {
+            setPadding(0, 0, 0, dp(18))
+        })
+
+        val shortcuts = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+        }
+        fun shortcut(symbol: String, title: String, url: String) {
+            val tile = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                background = editorialShape(panel, line, 15)
+                setPadding(dp(5), dp(12), dp(5), dp(10))
+                isClickable = true
+                isFocusable = true
+                setOnClickListener { openPage(url) }
+                addView(TextView(this@MainActivity).apply {
+                    text = symbol
+                    textSize = 24f
+                    gravity = Gravity.CENTER
+                    setTextColor(if (title == "Google") Color.WHITE else gold)
+                }, LinearLayout.LayoutParams(-1, dp(34)))
+                addView(label(title, 10f, ink, true).apply { gravity = Gravity.CENTER })
+            }
+            shortcuts.addView(tile, LinearLayout.LayoutParams(0, dp(78), 1f).apply {
+                marginEnd = dp(7)
+            })
+        }
+        shortcut("G", "Google", "https://www.google.com")
+        shortcut("▶", "YouTube", "https://www.youtube.com")
+        shortcut("f", "Facebook", "https://www.facebook.com")
+        shortcut("𝕏", "X", "https://x.com")
+        homeContent.addView(shortcuts)
+
+        val hero = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+            background = premiumGradient(Color.rgb(15, 48, 82), Color.rgb(8, 17, 34))
+            setPadding(dp(20), dp(18), dp(20), dp(18))
+            elevation = dp(3).toFloat()
+        }
+        hero.addView(label("FLOWPASS  /  PREMIUM BROWSER", 9f, Color.rgb(112, 205, 255), true).apply {
+            letterSpacing = 0.12f
+        })
+        hero.addView(label("أكثر من مجرد متصفح", 21f, Color.WHITE, true).apply {
+            setPadding(0, dp(8), 0, dp(4))
+        })
+        hero.addView(label("تجربة أنيقة، وصول أسرع، وتحكّم كامل بأدوات التصفح.", 12f, Color.rgb(207, 220, 238), false))
+        hero.addView(TextView(this).apply {
+            text = "ابدأ التصفح  〈"
+            textSize = 12f
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setTextColor(Color.rgb(10, 16, 30))
+            background = editorialShape(gold, null, 12)
+            setPadding(dp(16), dp(11), dp(16), dp(11))
+            setOnClickListener { openPage(FLOW_URL) }
+        }, LinearLayout.LayoutParams(-2, dp(42)).apply { topMargin = dp(16) })
+        homeContent.addView(hero, LinearLayout.LayoutParams(-1, dp(190)).apply {
+            topMargin = dp(18)
+        })
+
+        homeContent.addView(label("أدوات سريعة", 17f, ink, true).apply {
+            setPadding(0, dp(22), 0, dp(11))
+        })
+        val toolsRow1 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val toolsRow2 = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, dp(8), 0, 0)
+        }
+        fun toolTile(parent: LinearLayout, symbol: String, title: String, subtitle: String, action: () -> Unit) {
+            val tile = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                background = editorialShape(white, line, 14)
+                setPadding(dp(13), dp(12), dp(9), dp(11))
+                isClickable = true
+                isFocusable = true
+                setOnClickListener { action() }
+                addView(label(symbol, 21f, gold, true))
+                addView(label(title, 12f, ink, true).apply { setPadding(0, dp(6), 0, dp(2)) })
+                addView(label(subtitle, 9f, soft, false))
+            }
+            parent.addView(tile, LinearLayout.LayoutParams(0, dp(94), 1f).apply {
+                marginEnd = dp(8)
+            })
+        }
+        toolTile(toolsRow1, "☆", "المفضلة", "مواقعك المحفوظة") {
+            Toast.makeText(this, "ستتوفر إدارة المفضلة في التحديث التالي", Toast.LENGTH_SHORT).show()
+        }
+        toolTile(toolsRow1, "◷", "السجل", "آخر الصفحات") {
+            Toast.makeText(this, "سجل التصفح محفوظ داخل WebView", Toast.LENGTH_SHORT).show()
+        }
+        toolTile(toolsRow2, "↓", "التنزيلات", "ملفاتك") {
+            Toast.makeText(this, "افتح قائمة التنزيلات من أدوات المتصفح", Toast.LENGTH_SHORT).show()
+        }
+        toolTile(toolsRow2, "⚙", "الإعدادات", "الخصوصية والمظهر") { showDrawer() }
+        homeContent.addView(toolsRow1)
+        homeContent.addView(toolsRow2)
+
+        homeContent.addView(label("مساحة التصفح", 17f, ink, true).apply {
+            setPadding(0, dp(22), 0, dp(10))
+        })
+        homeContent.addView(label(
+            "وضع سطح المكتب ومحرك FlowPass يعملان من القائمة الجانبية. تبقى بيانات الجلسة وملفات الارتباط داخل WebView على جهازك.",
+            11f, soft, false
+        ).apply {
+            background = editorialShape(Color.rgb(17, 27, 45), line, 13)
+            setPadding(dp(14), dp(13), dp(14), dp(13))
+        })
+        homePanel.addView(homeContent)
+        body.addView(homePanel, LinearLayout.LayoutParams(-1, 0, 1f))
+
         web = WebView(this)
+        web.visibility = View.GONE
         web.addJavascriptInterface(EmailBridge(), "FlowPassAccount")
         body.addView(web, LinearLayout.LayoutParams(-1, 0, 1f))
 
@@ -324,10 +467,10 @@ class MainActivity : Activity() {
                 })
             }
         }
-        footer.addView(dockAction("⌂", "الرئيسية") { web.loadUrl(FLOW_URL) }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        footer.addView(dockAction("⌂", "الرئيسية") { showHome() }, LinearLayout.LayoutParams(0, dp(48), 1f))
         footer.addView(dockAction("‹", "رجوع", true) { if (web.canGoBack()) web.goBack() }, LinearLayout.LayoutParams(0, dp(48), 1f))
         footer.addView(dockAction("›", "تقدم", true) { if (web.canGoForward()) web.goForward() }, LinearLayout.LayoutParams(0, dp(48), 1f))
-        footer.addView(dockAction("•••", "الأدوات") { showDrawer() }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        footer.addView(dockAction("▢", "النوافذ") { showDrawer() }, LinearLayout.LayoutParams(0, dp(48), 1f))
         body.addView(View(this).apply { setBackgroundColor(line) }, LinearLayout.LayoutParams(-1, dp(1)))
         body.addView(footer)
 
@@ -437,6 +580,33 @@ class MainActivity : Activity() {
     }
 
     private fun actionBackAvailable(): Boolean = ::web.isInitialized && web.canGoBack()
+
+    private fun showHome() {
+        if (::homePanel.isInitialized) homePanel.visibility = View.VISIBLE
+        if (::web.isInitialized) web.visibility = View.GONE
+        if (::addressInput.isInitialized) addressInput.setText("")
+        hideDrawer()
+    }
+
+    private fun openPage(url: String) {
+        val target = if (url.startsWith("http://") || url.startsWith("https://")) url
+            else if (url.contains(".") && !url.contains(" ")) "https://$url"
+            else "https://www.google.com/search?q=" + Uri.encode(url)
+        homePanel.visibility = View.GONE
+        web.visibility = View.VISIBLE
+        addressInput.setText(target)
+        web.loadUrl(target)
+    }
+
+    private fun navigateFromAddress() {
+        val value = addressInput.text?.toString()?.trim().orEmpty()
+        if (value.isBlank()) return
+        openPage(value)
+        try {
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+            imm.hideSoftInputFromWindow(addressInput.windowToken, 0)
+        } catch (_: Exception) {}
+    }
 
     private fun editorialShape(fill: Int, stroke: Int?, radius: Int) = GradientDrawable().apply {
         setColor(fill)
@@ -661,8 +831,10 @@ class MainActivity : Activity() {
     override fun onBackPressed() {
         if (::drawer.isInitialized && drawer.visibility == View.VISIBLE) {
             hideDrawer()
-        } else if (::web.isInitialized && web.canGoBack()) {
+        } else if (::web.isInitialized && web.visibility == View.VISIBLE && web.canGoBack()) {
             web.goBack()
+        } else if (::web.isInitialized && web.visibility == View.VISIBLE) {
+            showHome()
         } else {
             super.onBackPressed()
         }
