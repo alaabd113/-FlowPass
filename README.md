@@ -21,3 +21,11 @@ Use JDK 17 and Android Gradle Plugin 8.7.3. Run `gradle assembleDebug` or open t
 
 ## Compatibility
 Desktop mode changes the browser user-agent and viewport request. Google Flow's desktop layout and features may still vary by device, account, region, and Google's current service behavior. The bundled FlowPass userscript depends on Google's response format and may require updates if that format changes. Verify behavior on a physical Android device.
+
+
+## 1.4.0 Flow-only update
+- Opens Google Flow directly and hides the general address/search bar and generic browser home.
+- Keeps Google sign-in and required Google service domains inside the app; unrelated destinations open externally.
+- Keeps portrait orientation, desktop mode, the FlowPass engine switch, saved email helper, WebView cookies, and Telegram attribution.
+- Requests media audio focus while the app is active and releases it when paused.
+- Google may restrict authentication in embedded WebViews; this app does not bypass Google's sign-in policy.
