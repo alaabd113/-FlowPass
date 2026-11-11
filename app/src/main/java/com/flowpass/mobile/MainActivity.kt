@@ -279,7 +279,7 @@ class MainActivity : Activity() {
             setHintTextColor(soft)
             setTextColor(ink)
             textSize = 13f
-            singleLine = true
+            isSingleLine = true
             imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_GO
             setPadding(0, 0, 0, 0)
             background = null
