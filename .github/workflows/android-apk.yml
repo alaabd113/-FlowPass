@@ -24,6 +24,8 @@ jobs:
           test -f "$SOURCE_DIR/app/src/main/java/com/flowpass/mobile/MainActivity.kt"
           test -f "$SOURCE_DIR/app/src/main/assets/flowpass.user.js"
           rsync -a --exclude='.github/' "$SOURCE_DIR/" ./
+          # Apply maintained native fixes after importing the upstream source archive.
+          cp patches/MainActivity.kt app/src/main/java/com/flowpass/mobile/MainActivity.kt
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add README.md build.gradle.kts gradle.properties settings.gradle.kts app/
