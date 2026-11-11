@@ -286,7 +286,22 @@ class MainActivity : Activity() {
         web.setDownloadListener { url, userAgent, contentDisposition, mimeType, _ ->
             val downloadUrl = url ?: return@setDownloadListener
             try {
-                val request = DownloadManager.Request(Uri.parse(downloadUrl))
+                val parsedDownloadUri = Uri.parse(downloadUrl)
+                if (parsedDownloadUri.scheme.equals("blob", ignoreCase = true)) {
+                    val blobFileName = URLUtil.guessFileName(downloadUrl, contentDisposition, mimeType)
+                        .ifBlank { "flowpass_download" }
+                    val js = "if (window.__flowPassSaveBlobUrl) { window.__flowPassSaveBlobUrl(" +
+                        JSONObject.quote(downloadUrl) + "," + JSONObject.quote(blobFileName) + "," +
+                        JSONObject.quote(mimeType ?: "application/octet-stream") + "); } else { console.error('[FlowPass] blob bridge not ready'); }"
+                    web.evaluateJavascript(js, null)
+                    Toast.makeText(this, "جارٍ تجهيز الملف للحفظ…", Toast.LENGTH_SHORT).show()
+                    return@setDownloadListener
+                }
+                if (parsedDownloadUri.scheme != "https" && parsedDownloadUri.scheme != "http") {
+                    Toast.makeText(this, "نوع رابط التنزيل غير مدعوم", Toast.LENGTH_LONG).show()
+                    return@setDownloadListener
+                }
+                val request = DownloadManager.Request(parsedDownloadUri)
                 val cookies = CookieManager.getInstance().getCookie(downloadUrl)
                 if (!cookies.isNullOrBlank()) request.addRequestHeader("Cookie", cookies)
                 if (!userAgent.isNullOrBlank()) request.addRequestHeader("User-Agent", userAgent)
@@ -357,6 +372,16 @@ class MainActivity : Activity() {
                   console.error('[FlowPass] Blob download failed', e);
                 }
               }
+              window.__flowPassSaveBlobUrl = async function(url, filename, mimeType) {
+                try {
+                  const response = await fetch(url);
+                  if (!response.ok) throw new Error('HTTP ' + response.status);
+                  const blob = await response.blob();
+                  await saveBlob(blob, filename || 'flowpass_download');
+                } catch (e) {
+                  console.error('[FlowPass] Native blob download handoff failed', e);
+                }
+              };
               document.addEventListener('click', function(event) {
                 const anchor = event.target && event.target.closest ? event.target.closest('a') : null;
                 if (!anchor) return;
