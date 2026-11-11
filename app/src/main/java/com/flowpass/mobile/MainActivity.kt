@@ -7,6 +7,7 @@ import android.app.Activity
 import android.app.Dialog
 import android.app.DownloadManager
 import android.content.Intent
+import android.content.ContentValues
 import android.content.res.ColorStateList
 import android.graphics.*
 import android.graphics.drawable.GradientDrawable
@@ -18,6 +19,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Base64
 import android.text.InputType
 import android.view.Gravity
 import android.view.MotionEvent
@@ -35,6 +38,9 @@ import android.widget.*
 import org.json.JSONObject
 import kotlin.math.cos
 import kotlin.math.sin
+import java.io.File
+import java.io.FileOutputStream
+import java.util.concurrent.ConcurrentHashMap
 
 class MainActivity : Activity() {
     private lateinit var web: WebView
@@ -80,6 +86,9 @@ class MainActivity : Activity() {
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
     private var welcomeDialog: Dialog? = null
     private var emailVaultDialog: Dialog? = null
+    private val blobStreams = ConcurrentHashMap<String, FileOutputStream>()
+    private val blobFiles = ConcurrentHashMap<String, File>()
+    private val blobNames = ConcurrentHashMap<String, Pair<String, String>>()
 
     private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
     private var audioFocusRequest: AudioFocusRequest? = null
@@ -157,6 +166,7 @@ class MainActivity : Activity() {
                 progressBar.visibility = View.GONE
                 if (desktopMode) enforceDesktopViewport()
                 if (isGoogleAccountsUrl(url)) attachEmailHelper()
+                installBlobDownloadHook()
                 if (url?.startsWith(FLOW) == true) {
                     CookieManager.getInstance().flush()
                     readDiagnostic()
@@ -188,6 +198,8 @@ class MainActivity : Activity() {
                 }
             }
         }
+
+        web.addJavascriptInterface(BlobDownloadBridge(), "FlowPassBlobDownloads")
 
         web.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
@@ -312,6 +324,126 @@ class MainActivity : Activity() {
         } else {
             val restored = web.restoreState(savedInstanceState)
             if (restored == null) web.loadUrl(FLOW_URL)
+        }
+    }
+
+
+    // Google Flow creates downloadable media as blob: URLs. DownloadManager cannot
+    // consume those URLs, so JavaScript streams the Blob to this native bridge in chunks.
+    private fun installBlobDownloadHook() {
+        if (!::web.isInitialized) return
+        val script = """
+            (function() {
+              if (window.__flowPassBlobHookInstalled) return;
+              window.__flowPassBlobHookInstalled = true;
+              const bridge = window.FlowPassBlobDownloads;
+              if (!bridge) return;
+              async function saveBlob(blob, filename) {
+                const id = 'fp-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+                try {
+                  bridge.beginBlobDownload(id, filename || 'flowpass_download', blob.type || 'application/octet-stream');
+                  const buffer = await blob.arrayBuffer();
+                  const bytes = new Uint8Array(buffer);
+                  const chunkSize = 196608;
+                  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+                    const part = bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length));
+                    let binary = '';
+                    for (let i = 0; i < part.length; i++) binary += String.fromCharCode(part[i]);
+                    bridge.appendBlobDownload(id, btoa(binary));
+                  }
+                  bridge.finishBlobDownload(id);
+                } catch (e) {
+                  try { bridge.abortBlobDownload(id); } catch (_) {}
+                  console.error('[FlowPass] Blob download failed', e);
+                }
+              }
+              document.addEventListener('click', function(event) {
+                const anchor = event.target && event.target.closest ? event.target.closest('a') : null;
+                if (!anchor) return;
+                const href = anchor.href || '';
+                if (!href.startsWith('blob:')) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                fetch(href).then(response => response.blob())
+                  .then(blob => saveBlob(blob, anchor.download || 'flowpass_download'))
+                  .catch(error => console.error('[FlowPass] Blob fetch failed', error));
+              }, true);
+            })();
+        """.trimIndent()
+        web.evaluateJavascript(script, null)
+    }
+
+    private inner class BlobDownloadBridge {
+        @JavascriptInterface
+        fun beginBlobDownload(id: String, filename: String, mimeType: String) {
+            try {
+                val safeId = id.filter { it.isLetterOrDigit() || it == '-' || it == '_' }.take(100)
+                if (safeId.isBlank()) return
+                val safeName = filename.substringAfterLast('/').substringAfterLast('\\\\')
+                    .replace(Regex("[/:*?\\"<>|]"), "_").take(180)
+                    .ifBlank { "flowpass_download" }
+                val temp = File(cacheDir, "blob-$safeId.tmp")
+                blobFiles[safeId] = temp
+                blobNames[safeId] = safeName to mimeType.ifBlank { "application/octet-stream" }
+                blobStreams[safeId] = FileOutputStream(temp)
+            } catch (error: Exception) {
+                android.util.Log.e("FlowPass", "Could not start blob download", error)
+            }
+        }
+
+        @JavascriptInterface
+        fun appendBlobDownload(id: String, base64Chunk: String) {
+            try {
+                val safeId = id.filter { it.isLetterOrDigit() || it == '-' || it == '_' }.take(100)
+                val stream = blobStreams[safeId] ?: return
+                stream.write(Base64.decode(base64Chunk, Base64.DEFAULT))
+            } catch (error: Exception) {
+                android.util.Log.e("FlowPass", "Could not write blob chunk", error)
+            }
+        }
+
+        @JavascriptInterface
+        fun finishBlobDownload(id: String) {
+            val safeId = id.filter { it.isLetterOrDigit() || it == '-' || it == '_' }.take(100)
+            try {
+                blobStreams.remove(safeId)?.use { it.flush() }
+                val temp = blobFiles.remove(safeId) ?: return
+                val (name, mime) = blobNames.remove(safeId) ?: ("flowpass_download" to "application/octet-stream")
+                val resolver = contentResolver
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val values = ContentValues().apply {
+                        put(MediaStore.Downloads.DISPLAY_NAME, name)
+                        put(MediaStore.Downloads.MIME_TYPE, mime)
+                        put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                        put(MediaStore.Downloads.IS_PENDING, 1)
+                    }
+                    val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                        ?: throw IllegalStateException("تعذّر إنشاء ملف التنزيل")
+                    resolver.openOutputStream(uri)?.use { output -> temp.inputStream().use { it.copyTo(output) } }
+                        ?: throw IllegalStateException("تعذّرت كتابة الملف")
+                    val done = ContentValues().apply { put(MediaStore.Downloads.IS_PENDING, 0) }
+                    resolver.update(uri, done, null, null)
+                } else {
+                    val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    if (!directory.exists()) directory.mkdirs()
+                    File(directory, name).outputStream().use { output -> temp.inputStream().use { it.copyTo(output) } }
+                }
+                temp.delete()
+                runOnUiThread { Toast.makeText(this@MainActivity, "تم حفظ الملف في مجلد التنزيلات: $name", Toast.LENGTH_LONG).show() }
+            } catch (error: Exception) {
+                android.util.Log.e("FlowPass", "Blob download save failed", error)
+                blobFiles.remove(safeId)?.delete()
+                blobNames.remove(safeId)
+                runOnUiThread { Toast.makeText(this@MainActivity, "تعذّر حفظ الملف: ${error.localizedMessage}", Toast.LENGTH_LONG).show() }
+            }
+        }
+
+        @JavascriptInterface
+        fun abortBlobDownload(id: String) {
+            val safeId = id.filter { it.isLetterOrDigit() || it == '-' || it == '_' }.take(100)
+            try { blobStreams.remove(safeId)?.close() } catch (_: Exception) {}
+            blobFiles.remove(safeId)?.delete()
+            blobNames.remove(safeId)
         }
     }
 
