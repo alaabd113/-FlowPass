@@ -1,31 +1,14 @@
-# FlowPass Mobile 1.2.0
+# FlowPass Mobile 1.5.0 — Royal Studio Edition
 
-Android WebView companion for Google Flow.
+Android WebView Studio companion for Google Flow (`flow.google.com`).
 
-## 1.2.0 updates
-- Removed the browser-status card and the visible page URL from the main screen.
-- Kept navigation, refresh, and all controls inside the side drawer.
-- Added an independent, persistent Desktop mode switch.
-- Added an independent, persistent FlowPass engine switch.
-- Removed the redundant "Open Flow in desktop mode" action.
-- Retained local email autofill support on Google's account sign-in page.
-- Tightened the native email-saving bridge so it accepts values only on the exact HTTPS `accounts.google.com` origin.
-- Kept WebView cookies enabled and flushed them when the app pauses or Flow loads.
-- No password storage and no automatic access to Gmail inboxes.
-
-## Google sign-in note
-Google may reject sign-in attempts made inside embedded WebViews with an "This browser or app may not be secure" message. This is a Google sign-in restriction, not a visual app error. FlowPass does not bypass that restriction. The app can remember an email entered on the supported sign-in page, but it cannot import Google passwords, silently use device accounts, or read Gmail messages without a separate official authorization flow.
+## 1.5.0 Royal Studio UI Upgrades
+- **Executive Studio Masthead**: Sculpted Obsidian & 24K Champagne Gold command bar featuring a live telemetry status pill (`ENGINE ACTIVE` / `PATCHED • N` / `ENGINE OFF`) and a 1-tap `980P PRO` / `MOBILE` viewport switcher badge.
+- **FlowPass Studio Command Hub (`الاستوديو`)**: Replaced legacy unused browser shortcuts with a dedicated Studio Command Center accessible from the bottom dock or status pill, featuring live `batchexecute` patch telemetry, a dual-card Smart Login vs. Desktop Studio switcher, and 4 sculpted 3D studio utilities.
+- **Smart Email Autofill Vault (`خزنة البريد الذكي`)**: Added an in-app glassmorphic dialog to view, pre-configure, edit, or clear the local autofill email for `accounts.google.com` with thread-safe UI synchronization.
+- **Scrollable Luxury Control Room Drawer**: Wrapped the sliding control room inside a smooth `ScrollView` with sculpted glass cards (`Display Viewport`, `FlowPass Engine`, `Privacy & Autofill Vault`, and `Creator Signature`) so controls never clip on compact screens.
+- **5-Action 3D Bottom Studio Dock**: Upgraded navigation bar (`Flow`, `رجوع`, `الاستوديو`, `تقدم`, `التحكم`) with live active-tab highlights and dynamic back/forward alpha states.
+- **Precision Vector Medallion (`ic_flowpass_foreground.xml`)**: Fixed inner ring path geometry and added chronometer index ticks, dual aurora/gold ribbons, and a royal diamond crest.
 
 ## Build
 Use JDK 17 and Android Gradle Plugin 8.7.3. Run `gradle assembleDebug` or open the project in Android Studio.
-
-## Compatibility
-Desktop mode changes the browser user-agent and viewport request. Google Flow's desktop layout and features may still vary by device, account, region, and Google's current service behavior. The bundled FlowPass userscript depends on Google's response format and may require updates if that format changes. Verify behavior on a physical Android device.
-
-
-## 1.4.0 Flow-only update
-- Opens Google Flow directly and hides the general address/search bar and generic browser home.
-- Keeps Google sign-in and required Google service domains inside the app; unrelated destinations open externally.
-- Keeps portrait orientation, desktop mode, the FlowPass engine switch, saved email helper, WebView cookies, and Telegram attribution.
-- Requests media audio focus while the app is active and releases it when paused.
-- Google may restrict authentication in embedded WebViews; this app does not bypass Google's sign-in policy.

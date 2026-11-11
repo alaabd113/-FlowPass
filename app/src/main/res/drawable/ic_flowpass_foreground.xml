@@ -3,20 +3,67 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:fillColor="#070D1B" android:pathData="M0,0h108v108h-108z"/>
-    <path android:fillColor="#101D35" android:pathData="M54,5a49,49 0,1 0,0 98a49,49 0,1 0,0 -98"/>
-    <path android:fillColor="#00000000" android:strokeColor="#D5A53D" android:strokeWidth="2.2"
-        android:pathData="M54,8a46,46 0,1 0,0 92a46,46 0,1 0,0 -92"/>
-    <path android:fillColor="#00000000" android:strokeColor="#167FD4" android:strokeWidth="2.2"
-        android:pathData="M9,64C24,35 76,22 99,45C82,73 33,88 9,64"/>
-    <path android:fillColor="#00000000" android:strokeColor="#F7D987" android:strokeWidth="1.4"
-        android:pathData="M15,67C32,43 73,33 92,46"/>
-    <path android:fillColor="#B87919" android:pathData="M31,26h48v9H43v11h29v9H43v27H31z"/>
-    <path android:fillColor="#F8D778" android:pathData="M27,24h50v9H39v11h31v9H39v27H27z"/>
-    <path android:fillColor="#FFF0B4" android:pathData="M27,24h50v3H27z"/>
-    <path android:fillColor="#E8B84E" android:pathData="M37,19l4,-9l7,6l6,-10l6,10l7,-6l4,9z"/>
-    <path android:fillColor="#FFF0B4" android:pathData="M37,19l4,-9l3,8zM54,6l6,10h-6zM67,16l7,-6l-3,9z"/>
-    <path android:fillColor="#0A1730" android:pathData="M44,15l2,-3l3,3l-3,3zM53,11l3,-4l3,4l-3,4zM64,15l3,-3l3,3l-3,3z"/>
-    <path android:fillColor="#FFFFFF" android:fillAlpha="0.16" android:pathData="M9,64C24,35 76,22 99,45C82,73 33,88 9,64"/>
-    <path android:fillColor="#F8D778" android:pathData="M18,86h3v3h-3zM86,23h2v2h-2zM20,27h2v2h-2z"/>
+    <!-- Abyssal Obsidian Royal Canvas -->
+    <path
+        android:fillColor="#050811"
+        android:pathData="M0,0h108v108h-108z"/>
+    <!-- Outer Architectural Octagonal/Circular Vault Base -->
+    <path
+        android:fillColor="#0B1222"
+        android:pathData="M54,7a47,47 0,1 0,0 94a47,47 0,1 0,0 -94"/>
+    <!-- Subtle Inner Midnight Velvet Core -->
+    <path
+        android:fillColor="#101A30"
+        android:pathData="M54,14a40,40 0,1 0,0 80a40,40 0,1 0,0 -80"/>
+    <!-- Outer 24K Champagne Gold Bezel Ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#E5C158"
+        android:strokeWidth="2.0"
+        android:strokeAlpha="0.92"
+        android:pathData="M54,10.5a43.5,43.5 0,1 0,0 87a43.5,43.5 0,1 0,0 -87"/>
+    <!-- Inner Precision Chronometer Hairline Ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FDE68A"
+        android:strokeWidth="0.8"
+        android:strokeAlpha="0.38"
+        android:pathData="M54,16a38,38 0,1 0,0 76a38,38 0,1 0,0 -76"/>
+    <!-- Cardinal Luxury Watchmaker Index Ticks -->
+    <path
+        android:fillColor="#E5C158"
+        android:pathData="M53.2,11.5h1.6v4.2h-1.6zM53.2,92.3h1.6v4.2h-1.6zM11.5,53.2h4.2v1.6h-4.2zM92.3,53.2h4.2v1.6h-4.2z"/>
+    <!-- Ambient Cyan Aurora Wave Behind Monogram -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#38BDF8"
+        android:strokeWidth="1.8"
+        android:strokeAlpha="0.48"
+        android:pathData="M17,63C31,37 74,27 91,45C77,71 35,83 17,63"/>
+    <!-- Secondary Gold Silk Ribbon Wave -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#E5C158"
+        android:strokeWidth="1.1"
+        android:strokeAlpha="0.35"
+        android:pathData="M20,46C38,28 72,34 88,58"/>
+    <!-- Architectural Monogram 'F' Deep Extrusion Shadow -->
+    <path
+        android:fillColor="#6E5011"
+        android:pathData="M36.5,30.5h37v8H46.5v11h23v7.5h-23v23H36.5z"/>
+    <!-- Architectural Monogram 'F' Brushed Champagne Gold Body -->
+    <path
+        android:fillColor="#E5C158"
+        android:pathData="M34.5,28.5h37v8H44.5v11h23v7.5h-23v23H34.5z"/>
+    <!-- Specular Top Bevel Highlight on Monogram -->
+    <path
+        android:fillColor="#FEF08A"
+        android:pathData="M34.5,28.5h37v2.4H34.5zM44.5,47.5h23v1.8h-23z"/>
+    <!-- Royal Diamond Crest Accent -->
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M69,47.5l4.8,-4.8l4.8,4.8l-4.8,4.8z"/>
+    <path
+        android:fillColor="#FDE68A"
+        android:pathData="M67.5,47.5l4.2,-4.2l4.2,4.2l-4.2,4.2z"/>
 </vector>

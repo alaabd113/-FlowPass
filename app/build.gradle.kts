@@ -16,7 +16,7 @@ android {
         applicationId = "com.flowpass.mobile"
         minSdk = 23
         targetSdk = 28
-        versionCode = 8
-        versionName = "1.4.0"
+        versionCode = 9
+        versionName = "1.5.0"
     }
 }
