@@ -3,6 +3,9 @@ package com.flowpass.mobile
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Dialog
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.content.Intent
 import android.net.Uri
 import android.graphics.Color
@@ -29,6 +32,13 @@ class MainActivity : Activity() {
     private var injectedUrl: String? = null
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
     private var welcomeDialog: Dialog? = null
+    private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
+    private var audioFocusRequest: AudioFocusRequest? = null
+    private val audioFocusListener = AudioManager.OnAudioFocusChangeListener { change ->
+        if (change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT) {
+            android.util.Log.d("FlowPass", "Media audio focus temporarily lost")
+        }
+    }
 
     private val navy = Color.rgb(10, 16, 30)
     private val panel = Color.rgb(22, 32, 52)
@@ -303,6 +313,7 @@ class MainActivity : Activity() {
         }, LinearLayout.LayoutParams(dp(42), dp(42)))
         addressRow.addView(address, LinearLayout.LayoutParams(-1, dp(48)))
         body.addView(addressRow)
+        addressRow.visibility = View.GONE // Flow-only mode: hide general browser/search controls.
 
         val rule = View(this).apply { setBackgroundColor(line) }
         body.addView(rule, LinearLayout.LayoutParams(-1, dp(1)))
@@ -452,9 +463,10 @@ class MainActivity : Activity() {
         })
         homePanel.addView(homeContent)
         body.addView(homePanel, LinearLayout.LayoutParams(-1, 0, 1f))
+        homePanel.visibility = View.GONE // Flow-only mode: do not show the generic browser home.
 
         web = WebView(this)
-        web.visibility = View.GONE
+        web.visibility = View.VISIBLE
         web.addJavascriptInterface(EmailBridge(), "FlowPassAccount")
         body.addView(web, LinearLayout.LayoutParams(-1, 0, 1f))
 
@@ -608,9 +620,11 @@ class MainActivity : Activity() {
     private fun actionBackAvailable(): Boolean = ::web.isInitialized && web.canGoBack()
 
     private fun showHome() {
-        if (::homePanel.isInitialized) homePanel.visibility = View.VISIBLE
-        if (::web.isInitialized) web.visibility = View.GONE
-        if (::addressInput.isInitialized) addressInput.setText("")
+        if (::web.isInitialized) {
+            homePanel.visibility = View.GONE
+            web.visibility = View.VISIBLE
+            if (web.url != FLOW_URL) web.loadUrl(FLOW_URL)
+        }
         hideDrawer()
     }
 
@@ -618,9 +632,21 @@ class MainActivity : Activity() {
         val target = if (url.startsWith("http://") || url.startsWith("https://")) url
             else if (url.contains(".") && !url.contains(" ")) "https://$url"
             else "https://www.google.com/search?q=" + Uri.encode(url)
+        val host = Uri.parse(target).host?.lowercase().orEmpty()
+        val allowed = host == "flow.google.com" ||
+            host == "accounts.google.com" ||
+            host.endsWith(".google.com") ||
+            host.endsWith(".googleusercontent.com") ||
+            host.endsWith(".gstatic.com") ||
+            host.endsWith(".googleapis.com")
+        if (!allowed) {
+            try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target))) }
+            catch (error: Exception) { android.util.Log.w("FlowPass", "Could not open external destination", error) }
+            return
+        }
         homePanel.visibility = View.GONE
         web.visibility = View.VISIBLE
-        addressInput.setText(target)
+        if (::addressInput.isInitialized) addressInput.setText(FLOW_URL)
         web.loadUrl(target)
     }
 
@@ -848,8 +874,59 @@ class MainActivity : Activity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        requestMediaAudioFocus()
+        if (::web.isInitialized) web.onResume()
+    }
+
+    private fun requestMediaAudioFocus() {
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MOVIE)
+                            .build()
+                    )
+                    .setOnAudioFocusChangeListener(audioFocusListener)
+                    .build()
+                audioFocusRequest = request
+                audioManager.requestAudioFocus(request)
+            } else {
+                @Suppress("DEPRECATION")
+                audioManager.requestAudioFocus(
+                    audioFocusListener,
+                    AudioManager.STREAM_MUSIC,
+                    AudioManager.AUDIOFOCUS_GAIN
+                )
+            }
+        } catch (error: Exception) {
+            android.util.Log.w("FlowPass", "Could not request media audio focus", error)
+        }
+    }
+
+    private fun abandonMediaAudioFocus() {
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                audioFocusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
+                audioFocusRequest = null
+            } else {
+                @Suppress("DEPRECATION")
+                audioManager.abandonAudioFocus(audioFocusListener)
+            }
+        } catch (error: Exception) {
+            android.util.Log.w("FlowPass", "Could not abandon media audio focus", error)
+        }
+    }
+
     override fun onPause() {
-        if (::web.isInitialized) CookieManager.getInstance().flush()
+        if (::web.isInitialized) {
+            CookieManager.getInstance().flush()
+            web.onPause()
+        }
+        abandonMediaAudioFocus()
         super.onPause()
     }
 
