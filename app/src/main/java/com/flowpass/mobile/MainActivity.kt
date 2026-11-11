@@ -318,14 +318,14 @@ class MainActivity : Activity() {
             setPadding(dp(18), dp(20), dp(18), dp(24))
             setBackgroundColor(paper)
         }
-        homeContent.addView(label("BROWSE  •  EXPLORE  •  MORE", 9f, blue, true).apply {
-            letterSpacing = 0.18f
+        homeContent.addView(label("FLOWPASS  /  BROWSER STUDIO", 9f, blue, true).apply {
+            letterSpacing = 0.20f
         })
-        homeContent.addView(label("تصفّح بطريقتك", 27f, ink, true).apply {
-            setPadding(0, dp(5), 0, dp(2))
+        homeContent.addView(label("تصفّح بطريقتك", 29f, ink, true).apply {
+            setPadding(0, dp(7), 0, dp(3))
         })
-        homeContent.addView(label("مساحتك الخاصة للوصول السريع إلى الويب", 12f, soft, false).apply {
-            setPadding(0, 0, 0, dp(18))
+        homeContent.addView(label("تجربة تصفح راقية، سريعة، وخاصة", 12f, soft, false).apply {
+            setPadding(0, 0, 0, dp(20))
         })
 
         val shortcuts = LinearLayout(this).apply {
@@ -336,7 +336,11 @@ class MainActivity : Activity() {
             val tile = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
-                background = editorialShape(panel, line, 15)
+                background = premiumGradient(Color.rgb(27, 39, 62), Color.rgb(12, 20, 35)).apply {
+                    setStroke(dp(1), Color.rgb(74, 91, 119))
+                    cornerRadius = dp(19).toFloat()
+                }
+                elevation = dp(5).toFloat()
                 setPadding(dp(5), dp(12), dp(5), dp(10))
                 isClickable = true
                 isFocusable = true
@@ -362,10 +366,18 @@ class MainActivity : Activity() {
         val hero = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
-            background = premiumGradient(Color.rgb(15, 48, 82), Color.rgb(8, 17, 34))
-            setPadding(dp(20), dp(18), dp(20), dp(18))
-            elevation = dp(3).toFloat()
+            background = premiumGradient(Color.rgb(27, 58, 91), Color.rgb(6, 13, 27)).apply {
+                setStroke(dp(1), Color.rgb(191, 151, 62))
+                cornerRadius = dp(22).toFloat()
+            }
+            setPadding(dp(21), dp(19), dp(21), dp(19))
+            elevation = dp(9).toFloat()
         }
+        hero.addView(ImageView(this).apply {
+            setImageResource(R.drawable.ic_flowpass_foreground)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            contentDescription = "FLOWPASS"
+        }, LinearLayout.LayoutParams(dp(54), dp(54)).apply { gravity = Gravity.END })
         hero.addView(label("FLOWPASS  /  PREMIUM BROWSER", 9f, Color.rgb(112, 205, 255), true).apply {
             letterSpacing = 0.12f
         })
@@ -383,8 +395,8 @@ class MainActivity : Activity() {
             setPadding(dp(16), dp(11), dp(16), dp(11))
             setOnClickListener { openPage(FLOW_URL) }
         }, LinearLayout.LayoutParams(-2, dp(42)).apply { topMargin = dp(16) })
-        homeContent.addView(hero, LinearLayout.LayoutParams(-1, dp(190)).apply {
-            topMargin = dp(18)
+        homeContent.addView(hero, LinearLayout.LayoutParams(-1, dp(218)).apply {
+            topMargin = dp(19)
         })
 
         homeContent.addView(label("أدوات سريعة", 17f, ink, true).apply {
@@ -398,7 +410,11 @@ class MainActivity : Activity() {
         fun toolTile(parent: LinearLayout, symbol: String, title: String, subtitle: String, action: () -> Unit) {
             val tile = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
-                background = editorialShape(white, line, 14)
+                background = premiumGradient(Color.rgb(25, 36, 57), Color.rgb(11, 18, 31)).apply {
+                    setStroke(dp(1), Color.rgb(58, 75, 102))
+                    cornerRadius = dp(18).toFloat()
+                }
+                elevation = dp(4).toFloat()
                 setPadding(dp(13), dp(12), dp(9), dp(11))
                 isClickable = true
                 isFocusable = true
