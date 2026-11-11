@@ -5,6 +5,7 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Dialog
+import android.app.DownloadManager
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.*
@@ -15,6 +16,7 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.os.Bundle
 import android.text.InputType
 import android.view.Gravity
@@ -264,6 +266,43 @@ class MainActivity : Activity() {
                     readDiagnostic()
                 }
                 return true
+            }
+        }
+
+        // Route every WebView download through Android's system Download Manager.
+        // Files are saved in the public Downloads folder and Android shows progress/completion.
+        web.setDownloadListener { url, userAgent, contentDisposition, mimeType, _ ->
+            val downloadUrl = url ?: return@setDownloadListener
+            try {
+                val request = DownloadManager.Request(Uri.parse(downloadUrl))
+                val cookies = CookieManager.getInstance().getCookie(downloadUrl)
+                if (!cookies.isNullOrBlank()) request.addRequestHeader("Cookie", cookies)
+                if (!userAgent.isNullOrBlank()) request.addRequestHeader("User-Agent", userAgent)
+                web.url?.let { request.addRequestHeader("Referer", it) }
+
+                val fileName = URLUtil.guessFileName(downloadUrl, contentDisposition, mimeType)
+                    .replace(Regex("[\\\\/:*?\\"<>|]"), "_")
+                    .ifBlank { "flowpass_download" }
+
+                request.setTitle(fileName)
+                request.setDescription("جارٍ تنزيل الملف عبر FlowPass")
+                request.setMimeType(mimeType ?: "application/octet-stream")
+                request.setNotificationVisibility(
+                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
+                )
+                request.setDestinationInExternalPublicDir(
+                    Environment.DIRECTORY_DOWNLOADS,
+                    fileName
+                )
+                request.setAllowedOverMetered(true)
+                request.setAllowedOverRoaming(false)
+
+                val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+                manager.enqueue(request)
+                Toast.makeText(this, "بدأ التنزيل: $fileName", Toast.LENGTH_LONG).show()
+            } catch (error: Exception) {
+                android.util.Log.e("FlowPass", "Download failed to enqueue", error)
+                Toast.makeText(this, "تعذّر بدء التنزيل: ${error.localizedMessage ?: "خطأ غير معروف"}", Toast.LENGTH_LONG).show()
             }
         }
 
